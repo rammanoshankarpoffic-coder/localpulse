@@ -3,12 +3,14 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'reac
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 import * as Location from 'expo-location';
+import HomeScreen from './screens/HomeScreen';
 
 export default function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(false);
   const [location, setLocation] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -25,22 +27,26 @@ export default function App() {
   const handleAuth = () => {
     if (isLogin) {
       signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          Alert.alert('Success', 'Logged in!');
+        .then((userCredential) => {
+          setUser(userCredential.user);
         })
         .catch((error) => {
           Alert.alert('Error', error.message);
         });
     } else {
       createUserWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          Alert.alert('Success', 'Account created!');
+        .then((userCredential) => {
+          setUser(userCredential.user);
         })
         .catch((error) => {
           Alert.alert('Error', error.message);
         });
     }
   };
+
+  if (user) {
+    return <HomeScreen />;
+  }
 
   return (
     <View style={styles.container}>
