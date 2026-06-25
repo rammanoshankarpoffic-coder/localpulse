@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 import * as Location from 'expo-location';
 import HomeScreen from './screens/HomeScreen';
+import MapScreen from './screens/MapScreen';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -11,6 +13,7 @@ export default function App() {
   const [isLogin, setIsLogin] = useState(false);
   const [location, setLocation] = useState(null);
   const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('home');
 
   useEffect(() => {
     (async () => {
@@ -45,9 +48,32 @@ export default function App() {
   };
 
   if (user) {
-    return <HomeScreen />;
-  }
+    return (
+      <View style={{ flex: 1 }}>
+        {activeTab === 'home' ? <HomeScreen /> : <MapScreen />}
 
+        <SafeAreaView edges={['bottom']} style={styles.tabBar}>
+          <TouchableOpacity
+            style={styles.tabButton}
+            onPress={() => setActiveTab('home')}
+          >
+            <Text style={[styles.tabText, activeTab === 'home' && styles.tabTextActive]}>
+              🏠 Home
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.tabButton}
+            onPress={() => setActiveTab('map')}
+          >
+            <Text style={[styles.tabText, activeTab === 'map' && styles.tabTextActive]}>
+              🗺️ Map
+            </Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       <Text style={styles.title}>📍 LocalPulse</Text>
@@ -134,5 +160,25 @@ const styles = StyleSheet.create({
     color: '#D6E4F7',
     marginTop: 18,
     fontSize: 14,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    height: 60,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#999999',
+  },
+  tabTextActive: {
+    color: '#1A56A0',
+    fontWeight: 'bold',
   },
 });
