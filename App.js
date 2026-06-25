@@ -3,10 +3,13 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebaseConfig';
+import { Home, Map as MapIcon, Megaphone, Calendar, Wrench } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import HomeScreen from './screens/HomeScreen';
 import MapScreen from './screens/MapScreen';
 import ReportIssueScreen from './screens/ReportIssueScreen';
+import EventsScreen from './screens/EventsScreen';
+import ServicesScreen from './screens/ServicesScreen';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -65,33 +68,33 @@ export default function App() {
         {activeTab === 'home' && <HomeScreen />}
         {activeTab === 'map' && <MapScreen />}
         {activeTab === 'report' && <ReportIssueScreen />}
+        {activeTab === 'events' && <EventsScreen />}
+        {activeTab === 'services' && <ServicesScreen />}
 
         <SafeAreaView edges={['bottom']} style={styles.tabBar}>
-          <TouchableOpacity
-            style={styles.tabButton}
-            onPress={() => setActiveTab('home')}
-          >
-            <Text style={[styles.tabText, activeTab === 'home' && styles.tabTextActive]}>
-              🏠 Home
-            </Text>
+          <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab('home')}>
+            <Home size={22} color={activeTab === 'home' ? '#1A56A0' : '#8E8E93'} />
+            <Text style={[styles.tabLabel, activeTab === 'home' && styles.tabLabelActive]}>Home</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.tabButton}
-            onPress={() => setActiveTab('map')}
-          >
-            <Text style={[styles.tabText, activeTab === 'map' && styles.tabTextActive]}>
-              🗺️ Map
-            </Text>
+          <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab('map')}>
+            <MapIcon size={22} color={activeTab === 'map' ? '#1A56A0' : '#8E8E93'} />
+            <Text style={[styles.tabLabel, activeTab === 'map' && styles.tabLabelActive]}>Map</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.tabButton}
-            onPress={() => setActiveTab('report')}
-          >
-            <Text style={[styles.tabText, activeTab === 'report' && styles.tabTextActive]}>
-              📢 Report
-            </Text>
+          <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab('report')}>
+            <Megaphone size={22} color={activeTab === 'report' ? '#1A56A0' : '#8E8E93'} />
+            <Text style={[styles.tabLabel, activeTab === 'report' && styles.tabLabelActive]}>Report</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab('events')}>
+            <Calendar size={22} color={activeTab === 'events' ? '#1A56A0' : '#8E8E93'} />
+            <Text style={[styles.tabLabel, activeTab === 'events' && styles.tabLabelActive]}>Events</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab('services')}>
+            <Wrench size={22} color={activeTab === 'services' ? '#1A56A0' : '#8E8E93'} />
+            <Text style={[styles.tabLabel, activeTab === 'services' && styles.tabLabelActive]}>Services</Text>
           </TouchableOpacity>
         </SafeAreaView>
       </View>
@@ -184,22 +187,26 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    height: 60,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    minHeight: 64,
+    borderTopWidth: 0.5,
+    borderTopColor: '#D1D1D6',
     backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   tabButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 3,
   },
-  tabText: {
-    fontSize: 14,
-    color: '#999999',
+  tabLabel: {
+    fontSize: 11,
+    color: '#8E8E93',
   },
-  tabTextActive: {
+  tabLabelActive: {
     color: '#1A56A0',
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });
