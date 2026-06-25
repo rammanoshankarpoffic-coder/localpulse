@@ -15,7 +15,7 @@ const STATUS_CONFIG = {
   resolved: { bg: '#D4F0E8', text: '#0F6E56', label: 'Resolved' },
 };
 
-export default function IssueCard({ issue, onPress, onUpvote, hasUpvoted }) {
+export default function IssueCard({ issue, onPress, onUpvote, hasUpvoted, onDelete, isOwner }) {
   const catColor = CATEGORY_COLORS[issue.category] || '#888888';
   const status = STATUS_CONFIG[issue.status] || STATUS_CONFIG.open;
 
@@ -36,7 +36,14 @@ export default function IssueCard({ issue, onPress, onUpvote, hasUpvoted }) {
           </View>
         </View>
 
-        <Text style={styles.title}>{issue.title}</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>{issue.title}</Text>
+          {isOwner && (
+            <TouchableOpacity onPress={onDelete}>
+              <Text style={styles.deleteText}>🗑️</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {issue.photoURL && (
           <Image source={{ uri: issue.photoURL }} style={styles.photo} />
@@ -94,11 +101,21 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   title: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#1A1A1A',
-    marginBottom: 4,
+    flex: 1,
+  },
+  deleteText: {
+    fontSize: 16,
+    marginLeft: 8,
   },
   photo: {
     width: '100%',

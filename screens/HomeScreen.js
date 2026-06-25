@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator } from 'react-native';
-import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import IssueCard from '../components/IssueCard';
 
@@ -44,6 +44,27 @@ export default function HomeScreen() {
       console.log('Error upvoting:', error);
     }
   };
+  const handleDelete = (issueId) => {
+    Alert.alert(
+      'Delete Report',
+      'Are you sure you want to delete this report? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, 'issues', issueId));
+              fetchIssues();
+            } catch (error) {
+              Alert.alert('Error', error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   if (loading) {
     return (
@@ -68,6 +89,8 @@ export default function HomeScreen() {
               onPress={() => {}}
               onUpvote={() => handleUpvote(item)}
               hasUpvoted={item.upvotedBy && item.upvotedBy.includes(auth.currentUser.uid)}
+              onDelete={() => handleDelete(item.id)}
+              isOwner={item.reportedBy === auth.currentUser.uid}
             />
           )}
           contentContainerStyle={styles.list}
