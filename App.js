@@ -12,6 +12,7 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(false);
   const [location, setLocation] = useState(null);
+  const [placeName, setPlaceName] = useState('');
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('home');
 
@@ -24,6 +25,16 @@ export default function App() {
       }
       let currentLocation = await Location.getCurrentPositionAsync({});
       setLocation(currentLocation);
+
+      let geocode = await Location.reverseGeocodeAsync({
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+      });
+
+      if (geocode.length > 0) {
+        const place = geocode[0];
+        setPlaceName(`${place.city || place.subregion || ''}, ${place.region || ''}`);
+      }
     })();
   }, []);
 
@@ -78,10 +89,8 @@ export default function App() {
     <View style={styles.container}>
       <Text style={styles.title}>📍 LocalPulse</Text>
 
-      {location && (
-        <Text style={styles.locationText}>
-          📍 {location.coords.latitude.toFixed(4)}, {location.coords.longitude.toFixed(4)}
-        </Text>
+      {placeName && (
+        <Text style={styles.locationText}>📍 {placeName}</Text>
       )}
 
       <TextInput
