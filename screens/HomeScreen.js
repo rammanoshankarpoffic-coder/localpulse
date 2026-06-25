@@ -1,52 +1,79 @@
-import { StyleSheet, Text, View, FlatList } from 'react-native';
+import { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator } from 'react-native';
+import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { db, auth } from '../firebaseConfig';
 import IssueCard from '../components/IssueCard';
 
-const SAMPLE_ISSUES = [
-  {
-    id: '1',
-    title: 'Pothole near Gandhi Road',
-    description: 'Large pothole causing traffic issues, especially dangerous at night.',
-    category: 'roads',
-    status: 'open',
-    isAnonymous: false,
-    reporterName: 'Priya S.',
-    distanceKm: '0.8',
-    upvotes: 12,
-  },
-  {
-    id: '2',
-    title: 'Water leakage near park',
-    description: 'Continuous water leakage from underground pipe for 3 days now.',
-    category: 'water',
-    status: 'in_progress',
-    isAnonymous: true,
-    distanceKm: '1.4',
-    upvotes: 27,
-  },
-  {
-    id: '3',
-    title: 'Broken streetlight',
-    description: 'Streetlight has been out for two weeks, area is very dark at night.',
-    category: 'electricity',
-    status: 'resolved',
-    isAnonymous: false,
-    reporterName: 'Arjun K.',
-    distanceKm: '2.1',
-    upvotes: 8,
-  },
-];
-
 export default function HomeScreen() {
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchIssues = async () => {
+    try {
+      const q = query(collection(db, 'issues'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setIssues(data);
+    } catch (error) {
+      console.log('Error fetching issues:', error);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchIssues();
+  }, []);
+
+  const handleUpvote = async (issue) => {
+    const userId = auth.currentUser.uid;
+    const alreadyUpvoted = issue.upvotedBy && issue.upvotedBy.includes(userId);
+    const issueRef = doc(db, 'issues', issue.id);
+
+    try {
+      if (alreadyUpvoted) {
+        await updateDoc(issueRef, {
+          upvotedBy: arrayRemove(userId),
+        });
+      } else {
+        await updateDoc(issueRef, {
+          upvotedBy: arrayUnion(userId),
+        });
+      }
+      fetchIssues();
+    } catch (error) {
+      console.log('Error upvoting:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1A56A0" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>📍 Nearby Issues</Text>
-      <FlatList
-        data={SAMPLE_ISSUES}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <IssueCard issue={item} onPress={() => {}} />}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-      />
+      {issues.length === 0 ? (
+        <Text style={styles.emptyText}>No issues reported yet. Be the first!</Text>
+      ) : (
+        <FlatList
+          data={issues}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <IssueCard
+              issue={item}
+              onPress={() => {}}
+              onUpvote={() => handleUpvote(item)}
+              hasUpvoted={item.upvotedBy && item.upvotedBy.includes(auth.currentUser.uid)}
+            />
+          )}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
@@ -58,11 +85,23 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 16,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+  },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1A1A1A',
     marginBottom: 16,
+  },
+  emptyText: {
+    color: '#999999',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 40,
   },
   list: {
     paddingBottom: 20,

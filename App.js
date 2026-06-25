@@ -6,6 +6,7 @@ import { auth } from './firebaseConfig';
 import * as Location from 'expo-location';
 import HomeScreen from './screens/HomeScreen';
 import MapScreen from './screens/MapScreen';
+import ReportIssueScreen from './screens/ReportIssueScreen';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -61,7 +62,9 @@ export default function App() {
   if (user) {
     return (
       <View style={{ flex: 1 }}>
-        {activeTab === 'home' ? <HomeScreen /> : <MapScreen />}
+        {activeTab === 'home' && <HomeScreen />}
+        {activeTab === 'map' && <MapScreen />}
+        {activeTab === 'report' && <ReportIssueScreen />}
 
         <SafeAreaView edges={['bottom']} style={styles.tabBar}>
           <TouchableOpacity
@@ -79,6 +82,15 @@ export default function App() {
           >
             <Text style={[styles.tabText, activeTab === 'map' && styles.tabTextActive]}>
               🗺️ Map
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.tabButton}
+            onPress={() => setActiveTab('report')}
+          >
+            <Text style={[styles.tabText, activeTab === 'report' && styles.tabTextActive]}>
+              📢 Report
             </Text>
           </TouchableOpacity>
         </SafeAreaView>

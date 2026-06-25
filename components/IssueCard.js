@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 
 const CATEGORY_COLORS = {
   roads: '#E53935',
@@ -15,7 +15,7 @@ const STATUS_CONFIG = {
   resolved: { bg: '#D4F0E8', text: '#0F6E56', label: 'Resolved' },
 };
 
-export default function IssueCard({ issue, onPress }) {
+export default function IssueCard({ issue, onPress, onUpvote, hasUpvoted }) {
   const catColor = CATEGORY_COLORS[issue.category] || '#888888';
   const status = STATUS_CONFIG[issue.status] || STATUS_CONFIG.open;
 
@@ -37,6 +37,11 @@ export default function IssueCard({ issue, onPress }) {
         </View>
 
         <Text style={styles.title}>{issue.title}</Text>
+
+        {issue.photoURL && (
+          <Image source={{ uri: issue.photoURL }} style={styles.photo} />
+        )}
+
         <Text style={styles.desc} numberOfLines={2}>{issue.description}</Text>
 
         <View style={styles.footer}>
@@ -44,7 +49,11 @@ export default function IssueCard({ issue, onPress }) {
             {issue.isAnonymous ? 'Anonymous' : issue.reporterName}
           </Text>
           <Text style={styles.meta}>{issue.distanceKm} km away</Text>
-          <Text style={styles.upvote}>▲ {issue.upvotes || 0}</Text>
+          <TouchableOpacity onPress={onUpvote} style={styles.upvoteButton}>
+            <Text style={[styles.upvote, hasUpvoted && styles.upvoteActive]}>
+              ▲ {issue.upvotedBy ? issue.upvotedBy.length : 0}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </TouchableOpacity>
@@ -91,6 +100,12 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     marginBottom: 4,
   },
+  photo: {
+    width: '100%',
+    height: 160,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
   desc: {
     fontSize: 13,
     color: '#666666',
@@ -105,9 +120,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999999',
   },
+  upvoteButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   upvote: {
     fontSize: 13,
-    color: '#FF6B35',
+    color: '#999999',
     fontWeight: 'bold',
+  },
+  upvoteActive: {
+    color: '#FF6B35',
   },
 });
