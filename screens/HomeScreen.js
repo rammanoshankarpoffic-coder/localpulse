@@ -8,7 +8,7 @@ import IssueCard from '../components/IssueCard';
 
 const RADIUS_OPTIONS = [1, 3, 5, 10];
 
-export default function HomeScreen() {
+export default function HomeScreen({ onIssuePress }) {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [radius, setRadius] = useState(5);
@@ -124,7 +124,7 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <IssueCard
               issue={item}
-              onPress={() => {}}
+              onPress={() => onIssuePress(item)}
               onUpvote={() => handleUpvote(item)}
               hasUpvoted={item.upvotedBy && item.upvotedBy.includes(auth.currentUser.uid)}
               onDelete={() => handleDelete(item.id)}

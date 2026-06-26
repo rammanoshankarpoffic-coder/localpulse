@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from './firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Home, Map as MapIcon, Megaphone, Calendar, Wrench, ShieldCheck } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import HomeScreen from './screens/HomeScreen';
@@ -12,16 +12,20 @@ import ReportIssueScreen from './screens/ReportIssueScreen';
 import EventsScreen from './screens/EventsScreen';
 import ServicesScreen from './screens/ServicesScreen';
 import AdminScreen from './screens/AdminScreen';
+import IssueDetailScreen from './screens/IssueDetailScreen';
 
 export default function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [isLogin, setIsLogin] = useState(false);
   const [location, setLocation] = useState(null);
   const [placeName, setPlaceName] = useState('');
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedIssue, setSelectedIssue] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -55,6 +59,9 @@ export default function App() {
   };
 
   const handleAuth = () => {
+    if (authLoading) return;
+    setAuthLoading(true);
+
     if (isLogin) {
       signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
@@ -63,29 +70,47 @@ export default function App() {
         })
         .catch((error) => {
           Alert.alert('Error', error.message);
-        });
+        })
+        .finally(() => setAuthLoading(false));
     } else {
       createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then(async (userCredential) => {
+          await setDoc(doc(db, 'users', userCredential.user.uid), {
+            email: email,
+            name: name,
+            role: 'citizen',
+          });
           setUser(userCredential.user);
           fetchUserRole(userCredential.user.uid);
         })
         .catch((error) => {
           Alert.alert('Error', error.message);
-        });
+        })
+        .finally(() => setAuthLoading(false));
     }
+  };
+  const openIssueDetail = (issue) => {
+    setSelectedIssue(issue);
+    setActiveTab('detail');
+  };
+
+  const closeIssueDetail = () => {
+    setSelectedIssue(null);
+    setActiveTab('home');
   };
 
   if (user) {
     return (
       <View style={{ flex: 1 }}>
-        {activeTab === 'home' && <HomeScreen />}
-        {activeTab === 'map' && <MapScreen />}
+        {activeTab === 'home' && <HomeScreen onIssuePress={openIssueDetail} />}
+        {activeTab === 'map' && <MapScreen onIssuePress={openIssueDetail} />}
         {activeTab === 'report' && <ReportIssueScreen />}
         {activeTab === 'events' && <EventsScreen />}
         {activeTab === 'services' && <ServicesScreen />}
         {activeTab === 'admin' && userRole === 'authority' && <AdminScreen />}
+        {activeTab === 'detail' && <IssueDetailScreen issue={selectedIssue} onBack={closeIssueDetail} />}
 
+        {activeTab !== 'detail' && (
         <SafeAreaView edges={['bottom']} style={styles.tabBar}>
           <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab('home')}>
             <Home size={22} color={activeTab === 'home' ? '#1A56A0' : '#8E8E93'} />
@@ -119,6 +144,7 @@ export default function App() {
             </TouchableOpacity>
           )}
         </SafeAreaView>
+        )}
       </View>
     );
   }
@@ -128,6 +154,16 @@ export default function App() {
 
       {placeName && (
         <Text style={styles.locationText}>📍 {placeName}</Text>
+      )}
+
+      {!isLogin && (
+        <TextInput
+          style={styles.input}
+          placeholder="Your Name"
+          placeholderTextColor="#A0AEC0"
+          value={name}
+          onChangeText={setName}
+        />
       )}
 
       <TextInput
@@ -148,8 +184,10 @@ export default function App() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleAuth}>
-        <Text style={styles.buttonText}>{isLogin ? 'Log In' : 'Sign Up'}</Text>
+      <TouchableOpacity style={styles.button} onPress={handleAuth} disabled={authLoading}>
+        <Text style={styles.buttonText}>
+          {authLoading ? 'Please wait...' : (isLogin ? 'Log In' : 'Sign Up')}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>

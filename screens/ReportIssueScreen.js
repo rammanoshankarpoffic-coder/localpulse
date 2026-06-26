@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Image, ScrollView, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 
 const CATEGORIES = ['roads', 'water', 'electricity', 'safety', 'sanitation'];
@@ -14,6 +14,7 @@ export default function ReportIssueScreen() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('roads');
   const [photo, setPhoto] = useState(null);
+  const [onBehalfOf, setOnBehalfOf] = useState('');
   const [loading, setLoading] = useState(false);
 
   const takePhoto = async () => {
@@ -69,6 +70,12 @@ export default function ReportIssueScreen() {
         lng: currentLocation.coords.longitude,
       };
 
+      let reporterName = onBehalfOf.trim();
+      if (!reporterName) {
+        const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+        reporterName = userDoc.exists() ? userDoc.data().name : 'A resident';
+      }
+
       await addDoc(collection(db, 'issues'), {
         title: title,
         description: description,
@@ -76,6 +83,7 @@ export default function ReportIssueScreen() {
         photoURL: photoURL,
         geopoint: geopoint,
         reportedBy: auth.currentUser.uid,
+        reporterName: reporterName,
         status: 'open',
         upvotes: 0,
         createdAt: new Date(),
@@ -128,8 +136,16 @@ export default function ReportIssueScreen() {
           </TouchableOpacity>
         ))}
       </View>
+      <Text style={styles.label}>Reporting on behalf of (optional)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Leave blank to use your own name"
+        value={onBehalfOf}
+        onChangeText={setOnBehalfOf}
+      />
 
       <Text style={styles.label}>Photo</Text>
+      
       <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
         <Text style={styles.photoButtonText}>
           {photo ? '📷 Retake Photo' : '📷 Take Photo'}
