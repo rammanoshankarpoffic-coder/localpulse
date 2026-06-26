@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from './firebaseConfig';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Home, Map as MapIcon, Megaphone, Calendar, Wrench, ShieldCheck } from 'lucide-react-native';
+import { Home, Map as MapIcon, Megaphone, Calendar, Wrench, ShieldCheck, Eye, EyeOff } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import HomeScreen from './screens/HomeScreen';
 import MapScreen from './screens/MapScreen';
@@ -26,6 +26,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -175,14 +176,26 @@ export default function App() {
         autoCapitalize="none"
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#A0AEC0"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      <View style={styles.passwordWrapper}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Password"
+          placeholderTextColor="#A0AEC0"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeButton}
+          onPress={() => setShowPassword(!showPassword)}
+        >
+          {showPassword ? (
+            <EyeOff size={20} color="#888888" />
+          ) : (
+            <Eye size={20} color="#888888" />
+          )}
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.button} onPress={handleAuth} disabled={authLoading}>
         <Text style={styles.buttonText}>
@@ -226,6 +239,23 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     marginBottom: 14,
+  },
+  passwordWrapper: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    marginBottom: 14,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
   },
   button: {
     width: '100%',
