@@ -4,13 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from './firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
-import { Home, Map as MapIcon, Megaphone, Calendar, Wrench } from 'lucide-react-native';
+import { Home, Map as MapIcon, Megaphone, Calendar, Wrench, ShieldCheck } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import HomeScreen from './screens/HomeScreen';
 import MapScreen from './screens/MapScreen';
 import ReportIssueScreen from './screens/ReportIssueScreen';
 import EventsScreen from './screens/EventsScreen';
 import ServicesScreen from './screens/ServicesScreen';
+import AdminScreen from './screens/AdminScreen';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -83,6 +84,7 @@ export default function App() {
         {activeTab === 'report' && <ReportIssueScreen />}
         {activeTab === 'events' && <EventsScreen />}
         {activeTab === 'services' && <ServicesScreen />}
+        {activeTab === 'admin' && userRole === 'authority' && <AdminScreen />}
 
         <SafeAreaView edges={['bottom']} style={styles.tabBar}>
           <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab('home')}>
@@ -109,6 +111,13 @@ export default function App() {
             <Wrench size={22} color={activeTab === 'services' ? '#1A56A0' : '#8E8E93'} />
             <Text style={[styles.tabLabel, activeTab === 'services' && styles.tabLabelActive]}>Services</Text>
           </TouchableOpacity>
+
+          {userRole === 'authority' && (
+            <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab('admin')}>
+              <ShieldCheck size={22} color={activeTab === 'admin' ? '#1A56A0' : '#8E8E93'} />
+              <Text style={[styles.tabLabel, activeTab === 'admin' && styles.tabLabelActive]}>Admin</Text>
+            </TouchableOpacity>
+          )}
         </SafeAreaView>
       </View>
     );

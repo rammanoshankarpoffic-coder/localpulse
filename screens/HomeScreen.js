@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import * as Location from 'expo-location';
 import { getDistanceKm } from '../utils/geoUtils';
 import IssueCard from '../components/IssueCard';
 
+const RADIUS_OPTIONS = [1, 3, 5, 10];
+
 export default function HomeScreen() {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [radius, setRadius] = useState(5);
+
+  const filteredIssues = issues.filter((issue) => {
+    if (issue.distanceKm === '?') return false;
+    return parseFloat(issue.distanceKm) <= radius;
+  });
 
   const fetchIssues = async () => {
     try {
@@ -92,11 +100,26 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>📍 Nearby Issues</Text>
-      {issues.length === 0 ? (
-        <Text style={styles.emptyText}>No issues reported yet. Be the first!</Text>
+
+      <View style={styles.radiusRow}>
+        {RADIUS_OPTIONS.map((r) => (
+          <TouchableOpacity
+            key={r}
+            onPress={() => setRadius(r)}
+            style={[styles.radiusBtn, radius === r && styles.radiusBtnActive]}
+          >
+            <Text style={[styles.radiusText, radius === r && styles.radiusTextActive]}>
+              {r} km
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {filteredIssues.length === 0 ? (
+        <Text style={styles.emptyText}>No issues within {radius} km. Try a wider radius.</Text>
       ) : (
         <FlatList
-          data={issues}
+          data={filteredIssues}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <IssueCard
@@ -119,7 +142,19 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F7FA', paddingTop: 60, paddingHorizontal: 16 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F7FA' },
-  header: { fontSize: 24, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 16 },
+  header: { fontSize: 24, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 12 },
+  radiusRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  radiusBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  radiusBtnActive: { backgroundColor: '#1A56A0', borderColor: '#1A56A0' },
+  radiusText: { fontSize: 13, color: '#444444' },
+  radiusTextActive: { color: '#FFFFFF', fontWeight: 'bold' },
   emptyText: { color: '#999999', fontSize: 14, textAlign: 'center', marginTop: 40 },
   list: { paddingBottom: 20 },
 });
