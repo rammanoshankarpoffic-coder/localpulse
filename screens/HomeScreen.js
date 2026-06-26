@@ -21,10 +21,13 @@ export default function HomeScreen({ onIssuePress }) {
   const fetchIssues = async () => {
     try {
       const q = query(collection(db, 'issues'), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-      const userLocation = await Location.getCurrentPositionAsync({});
+      const [snapshot, userLocation] = await Promise.all([
+        getDocs(q),
+        Location.getCurrentPositionAsync({}),
+      ]);
+
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
       const dataWithDistance = data.map((issue) => {
         if (issue.geopoint) {
