@@ -1,5 +1,8 @@
-import { StyleSheet, View } from 'react-native';
+import { useState, useEffect } from 'react';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 const CATEGORY_COLORS = {
   roads: '#E53935',
@@ -9,48 +12,54 @@ const CATEGORY_COLORS = {
   sanitation: '#2E7D32',
 };
 
-const SAMPLE_ISSUES = [
-  {
-    id: '1',
-    title: 'Pothole near Gandhi Road',
-    category: 'roads',
-    lat: 10.8810,
-    lng: 77.0220,
-  },
-  {
-    id: '2',
-    title: 'Water leakage near park',
-    category: 'water',
-    lat: 10.8770,
-    lng: 77.0195,
-  },
-  {
-    id: '3',
-    title: 'Broken streetlight',
-    category: 'electricity',
-    lat: 10.8830,
-    lng: 77.0240,
-  },
-];
+export default function MapScreen({ onIssuePress }) {
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-export default function MapScreen() {
+  useEffect(() => {
+    const fetchIssues = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'issues'));
+        const data = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((issue) => issue.geopoint);
+        setIssues(data);
+      } catch (error) {
+        console.log('Error fetching issues for map:', error);
+      }
+      setLoading(false);
+    };
+    fetchIssues();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1A56A0" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <MapView
         style={styles.map}
+        showsUserLocation={true}
         initialRegion={{
           latitude: 10.8794,
           longitude: 77.0207,
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
         }}
       >
-        {SAMPLE_ISSUES.map((issue) => (
+        {issues.map((issue) => (
           <Marker
             key={issue.id}
-            coordinate={{ latitude: issue.lat, longitude: issue.lng }}
-            pinColor={CATEGORY_COLORS[issue.category]}
+            coordinate={{ latitude: issue.geopoint.lat, longitude: issue.geopoint.lng }}
+            pinColor={CATEGORY_COLORS[issue.category] || '#888888'}
             title={issue.title}
+            description={issue.description}
+            onCalloutPress={() => onIssuePress(issue)}
           />
         ))}
       </MapView>
@@ -59,10 +68,7 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  map: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
