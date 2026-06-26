@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from './firebaseConfig';
+import { auth, db } from './firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 import { Home, Map as MapIcon, Megaphone, Calendar, Wrench } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import HomeScreen from './screens/HomeScreen';
@@ -18,6 +19,7 @@ export default function App() {
   const [location, setLocation] = useState(null);
   const [placeName, setPlaceName] = useState('');
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [activeTab, setActiveTab] = useState('home');
 
   useEffect(() => {
@@ -42,11 +44,21 @@ export default function App() {
     })();
   }, []);
 
+  const fetchUserRole = async (uid) => {
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    if (userDoc.exists()) {
+      setUserRole(userDoc.data().role);
+    } else {
+      setUserRole('citizen');
+    }
+  };
+
   const handleAuth = () => {
     if (isLogin) {
       signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
           setUser(userCredential.user);
+          fetchUserRole(userCredential.user.uid);
         })
         .catch((error) => {
           Alert.alert('Error', error.message);
@@ -55,6 +67,7 @@ export default function App() {
       createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
           setUser(userCredential.user);
+          fetchUserRole(userCredential.user.uid);
         })
         .catch((error) => {
           Alert.alert('Error', error.message);

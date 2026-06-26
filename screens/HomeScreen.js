@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
+import * as Location from 'expo-location';
+import { getDistanceKm } from '../utils/geoUtils';
 import IssueCard from '../components/IssueCard';
 
 export default function HomeScreen() {
@@ -13,7 +15,23 @@ export default function HomeScreen() {
       const q = query(collection(db, 'issues'), orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setIssues(data);
+
+      const userLocation = await Location.getCurrentPositionAsync({});
+
+      const dataWithDistance = data.map((issue) => {
+        if (issue.geopoint) {
+          const dist = getDistanceKm(
+            userLocation.coords.latitude,
+            userLocation.coords.longitude,
+            issue.geopoint.lat,
+            issue.geopoint.lng
+          );
+          return { ...issue, distanceKm: dist.toFixed(1) };
+        }
+        return { ...issue, distanceKm: '?' };
+      });
+
+      setIssues(dataWithDistance);
     } catch (error) {
       console.log('Error fetching issues:', error);
     }
@@ -31,19 +49,16 @@ export default function HomeScreen() {
 
     try {
       if (alreadyUpvoted) {
-        await updateDoc(issueRef, {
-          upvotedBy: arrayRemove(userId),
-        });
+        await updateDoc(issueRef, { upvotedBy: arrayRemove(userId) });
       } else {
-        await updateDoc(issueRef, {
-          upvotedBy: arrayUnion(userId),
-        });
+        await updateDoc(issueRef, { upvotedBy: arrayUnion(userId) });
       }
       fetchIssues();
     } catch (error) {
       console.log('Error upvoting:', error);
     }
   };
+
   const handleDelete = (issueId) => {
     Alert.alert(
       'Delete Report',
@@ -102,31 +117,9 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F7FA',
-    paddingTop: 60,
-    paddingHorizontal: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5F7FA',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 16,
-  },
-  emptyText: {
-    color: '#999999',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 40,
-  },
-  list: {
-    paddingBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: '#F5F7FA', paddingTop: 60, paddingHorizontal: 16 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F7FA' },
+  header: { fontSize: 24, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 16 },
+  emptyText: { color: '#999999', fontSize: 14, textAlign: 'center', marginTop: 40 },
+  list: { paddingBottom: 20 },
 });

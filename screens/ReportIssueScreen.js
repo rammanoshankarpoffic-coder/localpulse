@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Image, ScrollView, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import { collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 
@@ -62,11 +63,18 @@ export default function ReportIssueScreen() {
         photoURL = await uploadToCloudinary(photo);
       }
 
+      const currentLocation = await Location.getCurrentPositionAsync({});
+      const geopoint = {
+        lat: currentLocation.coords.latitude,
+        lng: currentLocation.coords.longitude,
+      };
+
       await addDoc(collection(db, 'issues'), {
         title: title,
         description: description,
         category: category,
         photoURL: photoURL,
+        geopoint: geopoint,
         reportedBy: auth.currentUser.uid,
         status: 'open',
         upvotes: 0,
