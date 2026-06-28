@@ -1,5 +1,5 @@
 # 📍 LocalPulse — Hyperlocal Civic App
-DevFusion 3.0 | IIT Bombay | Problem Statement #26ENLP4 | Solo Build
+DevFusion 3.0 | IIT Bombay | Problem Statement #26ENLP4 | 
 
 ## Problem
 Residents in Tier-2/3 Indian towns have no structured way to report civic
@@ -63,6 +63,3 @@ eas build -p android --profile preview
 - Map uses OpenStreetMap tiles via WebView instead of native Google Maps,
   to avoid requiring a billing-enabled Google Cloud account for the API key
 - Firestore security rules are in open/test mode for the demo period
-
-## Solo Developer
-Built entirely solo for DevFusion 3.0, IIT Bombay.
